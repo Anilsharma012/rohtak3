@@ -6,6 +6,9 @@ export enum Schedule {
     G = 'G',
 }
 
+export type AuthRole = 'admin' | 'pharmacist' | 'inventory_manager' | 'cashier' | 'viewer';
+export interface AuthUser { id: string; name: string; email: string; role: AuthRole }
+
 export type Uom = 'Tablet' | 'Strip' | 'Box' | 'Bottle';
 
 export interface Product {
