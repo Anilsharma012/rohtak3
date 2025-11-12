@@ -43,50 +43,58 @@ const run = async () => {
     }
 
     // Create a purchase (with GRN) and add batches atomically
-    const session = await mongoose.startSession();
-    session.startTransaction();
-    try {
-      const invoiceNo = `INV-${Date.now()}`;
-      const invoiceDate = new Date();
-      const vendor = 'Sample Vendor Pvt Ltd';
-      const userId = admin?._id || (admin && admin._id) || 'seed';
+    let attempt = 0;
+    const maxAttempts = 3;
+    while (attempt < maxAttempts) {
+      attempt++;
+      const session = await mongoose.startSession();
+      session.startTransaction();
+      try {
+        const invoiceNo = `INV-${Date.now()}`;
+        const invoiceDate = new Date();
+        const vendor = 'Sample Vendor Pvt Ltd';
+        const userId = admin?._id || (admin && admin._id) || 'seed';
 
-      const grnLines: any[] = [];
-      let invoiceTotal = 0;
+        const grnLines: any[] = [];
+        let invoiceTotal = 0;
 
-      // Add batches for each created item
-      for (const item of created) {
-        const batchNo = `BATCH-${Math.floor(Math.random() * 9000) + 1000}`;
-        const qty = 100;
-        const freeQty = 0;
-        const purchasePrice = item.purchasePrice || 0;
-        const mrp = item.mrp || undefined;
-        const salePrice = item.salePrice || undefined;
+        // Add batches for each created item
+        for (const item of created) {
+          const batchNo = `BATCH-${Math.floor(Math.random() * 9000) + 1000}`;
+          const qty = 100;
+          const freeQty = 0;
+          const purchasePrice = item.purchasePrice || 0;
+          const mrp = item.mrp || undefined;
+          const salePrice = item.salePrice || undefined;
 
-        // update item
-        const itDoc = await Item.findById(item._id).session(session);
-        const totalQty = qty + freeQty;
-        itDoc.batches.push({ batchNo, expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), onHand: totalQty, mrp, purchasePrice, salePrice });
-        itDoc.onHand = (itDoc.onHand || 0) + totalQty;
-        await itDoc.save({ session });
+          // update item
+          const itDoc = await Item.findById(item._id).session(session);
+          const totalQty = qty + freeQty;
+          itDoc.batches.push({ batchNo, expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), onHand: totalQty, mrp, purchasePrice, salePrice });
+          itDoc.onHand = (itDoc.onHand || 0) + totalQty;
+          await itDoc.save({ session });
 
-        grnLines.push({ productId: itDoc._id, productName: itDoc.name, batchNo, expiryDate: new Date(), qty, freeQty, purchasePrice, mrp, salePrice });
-        invoiceTotal += qty * purchasePrice;
+          grnLines.push({ productId: itDoc._id, productName: itDoc.name, batchNo, expiryDate: new Date(), qty, freeQty, purchasePrice, mrp, salePrice });
+          invoiceTotal += qty * purchasePrice;
+        }
+
+        const grn = await GRN.create([{ invoiceNo, invoiceDate, vendor, lines: grnLines, createdBy: userId }], { session });
+        const grnDoc = grn[0];
+
+        const purchase = await PurchaseInvoice.create([{ invoiceNo, vendor, invoiceDate, totalAmount: Number(invoiceTotal.toFixed(2)), status: 'posted', grnId: grnDoc._id, createdBy: userId }], { session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        console.log('Seed purchase created:', purchase[0]._id.toString());
+        break; // success
+      } catch (err: any) {
+        await session.abortTransaction();
+        session.endSession();
+        console.error('Seed attempt', attempt, 'failed:', err.message || err);
+        if (attempt >= maxAttempts) throw err; // rethrow after max attempts
+        await new Promise(r => setTimeout(r, 500 * attempt));
       }
-
-      const grn = await GRN.create([{ invoiceNo, invoiceDate, vendor, lines: grnLines, createdBy: userId }], { session });
-      const grnDoc = grn[0];
-
-      const purchase = await PurchaseInvoice.create([{ invoiceNo, vendor, invoiceDate, totalAmount: Number(invoiceTotal.toFixed(2)), status: 'posted', grnId: grnDoc._id, createdBy: userId }], { session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      console.log('Seed purchase created:', purchase[0]._id.toString());
-    } catch (err) {
-      await session.abortTransaction();
-      session.endSession();
-      throw err;
     }
 
     console.log('Seeding completed');
