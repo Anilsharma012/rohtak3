@@ -42,6 +42,10 @@ export const createApp = () => {
   app.use('/api/grn', grnRoutes);
   app.use('/api/purchases', purchasesRoutes);
   app.use('/api/purchase-returns', purchaseReturnsRoutes);
+  app.use('/api/sales', require('./routes/sales.routes').default);
+  app.use('/api/sales-returns', require('./routes/sales-returns.routes').default);
+  app.use('/api/sales-orders', require('./routes/sales-orders.routes').default);
+  app.use('/api/delivery-options', require('./routes/delivery-options.routes').default);
   app.use('/api/stock-movements', stockMovementRoutes);
 
   app.use(notFound);
