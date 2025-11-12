@@ -123,27 +123,30 @@ const BatchesPage: React.FC = () => {
         }
     };
 
-    const isBatchNearExpiry = (expiryDate: string) => {
+    const isBatchNearExpiry = (expiryDate?: Date) => {
+        if (!expiryDate) return false;
         const today = new Date();
         const expiry = new Date(expiryDate);
         const threeMonthsFromNow = new Date();
         threeMonthsFromNow.setMonth(today.getMonth() + 3);
-        return expiry < threeMonthsFromNow;
+        return expiry < threeMonthsFromNow && expiry > today;
     };
 
-    const isBatchExpired = (expiryDate: string) => {
+    const isBatchExpired = (expiryDate?: Date) => {
+        if (!expiryDate) return false;
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // Compare with start of day
+        today.setHours(0, 0, 0, 0);
         const expiry = new Date(expiryDate);
+        expiry.setHours(0, 0, 0, 0);
         return expiry < today;
     };
-    
-    const filteredBatches = enrichedBatches.filter(b => {
-        const matchesSearch = b.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            b.batchNumber.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const filteredBatches = batches.filter(b => {
+        const matchesSearch = b.itemName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            b.batchNo.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesExpiry = expiryFilter === 'ALL' ||
-            (expiryFilter === 'NEAR_EXPIRY' && !isBatchExpired(b.expiryDate) && isBatchNearExpiry(b.expiryDate)) ||
+            (expiryFilter === 'NEAR_EXPIRY' && isBatchNearExpiry(b.expiryDate)) ||
             (expiryFilter === 'EXPIRED' && isBatchExpired(b.expiryDate));
 
         return matchesSearch && matchesExpiry;
