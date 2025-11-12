@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { ENV } from './config/env';
 import authRoutes from './routes/auth.routes';
 import itemRoutes from './routes/items.routes';
+import batchesRoutes from './routes/batches.routes';
 import grnRoutes from './routes/grn.routes';
 import stockMovementRoutes from './routes/stock-movement.routes';
 import { errorHandler, notFound } from './middleware/error';
