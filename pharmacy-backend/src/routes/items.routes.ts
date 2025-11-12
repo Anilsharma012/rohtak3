@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/auth';
-import { createItem, getItems, getItem, updateItem, deleteItem, adjustStock, addBatch, updateBatch, deleteBatch, getAllBatches } from '../controllers/items.controller';
+import { createItem, getItems, getItem, updateItem, deleteItem, adjustStock, addBatch, updateBatch, deleteBatch, getBatches, getBatch, updateBatchPrice, deleteBatchStrict, getAllBatches } from '../controllers/items.controller';
 
 const router = Router();
 
-router.get('/batches/list', requireAuth(), getAllBatches);
 router.get('/', requireAuth(), getItems);
 router.post('/', requireAuth(['admin','inventory_manager']), createItem);
 router.get('/:id', requireAuth(), getItem);

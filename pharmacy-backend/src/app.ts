@@ -6,6 +6,9 @@ import cookieParser from 'cookie-parser';
 import { ENV } from './config/env';
 import authRoutes from './routes/auth.routes';
 import itemRoutes from './routes/items.routes';
+import batchesRoutes from './routes/batches.routes';
+import grnRoutes from './routes/grn.routes';
+import stockMovementRoutes from './routes/stock-movement.routes';
 import { errorHandler, notFound } from './middleware/error';
 
 export const createApp = () => {
@@ -33,6 +36,9 @@ export const createApp = () => {
 
   app.use('/api/auth', authRoutes);
   app.use('/api/items', itemRoutes);
+  app.use('/api/batches', batchesRoutes);
+  app.use('/api/grn', grnRoutes);
+  app.use('/api/stock-movements', stockMovementRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

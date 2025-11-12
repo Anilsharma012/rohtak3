@@ -6,6 +6,7 @@ import ImageEditorPage from './ImageEditorPage';
 import SalesPage from './SalesPage';
 import PurchasesPage from './PurchasesPage';
 import BatchesPage from './BatchesPage';
+import AddStockGRNPage from './AddStockGRNPage';
 import ReportsPage from './ReportsPage';
 import SettingsPage from './SettingsPage';
 import StockMovementPage from './StockMovementPage';
@@ -37,7 +38,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ user, onLogout }) => 
       case 'batches':
         return <BatchesPage />;
       case 'add-stock':
-        return <ComingSoonPage title="Add Stock / GRN" />;
+        return <AddStockGRNPage setActivePage={setActivePage} />;
       case 'stock-movement':
         return <StockMovementPage />;
       case 'purchase-invoices':
