@@ -6,10 +6,20 @@ export const notFound = (req: Request, res: Response) => {
 
 export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
   console.error('❌ Error:', err);
+
+  if (res.headersSent) {
+    return next(err);
+  }
+
   const status = err.status || 500;
-  res.status(status).json({
+  const response: any = {
     success: false,
     message: err.message || 'Internal Server Error',
-    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
-  });
+  };
+
+  if (process.env.NODE_ENV !== 'production' && err.stack) {
+    response.stack = err.stack;
+  }
+
+  res.status(status).json(response);
 };

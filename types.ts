@@ -7,7 +7,7 @@ export enum Schedule {
 }
 
 export type AuthRole = 'admin' | 'pharmacist' | 'inventory_manager' | 'cashier' | 'viewer';
-export interface AuthUser { id: string; name: string; email: string; role: AuthRole }
+export interface AuthUser { id: string; name: string; email: string; role: AuthRole; token?: string }
 
 export type Uom = 'Tablet' | 'Strip' | 'Box' | 'Bottle';
 
