@@ -38,7 +38,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ user, onLogout }) => 
       case 'batches':
         return <BatchesPage />;
       case 'add-stock':
-        return <ComingSoonPage title="Add Stock / GRN" />;
+        return <AddStockGRNPage />;
       case 'stock-movement':
         return <StockMovementPage />;
       case 'purchase-invoices':
