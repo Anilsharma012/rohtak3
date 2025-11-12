@@ -264,6 +264,118 @@ export const getBatches = asyncHandler(async (req: Request, res: Response) => {
   });
 });
 
+export const getBatch = asyncHandler(async (req: Request, res: Response) => {
+  const { batchId } = req.params;
+
+  if (!batchId || !batchId.includes('-')) {
+    return res.status(400).json({ success: false, message: 'Invalid batchId format' });
+  }
+
+  const [itemId, batchNo] = batchId.split('-');
+
+  const item = await Item.findById(itemId);
+  if (!item) {
+    return res.status(404).json({ success: false, message: 'Product not found' });
+  }
+
+  const batch = item.batches.find(b => b.batchNo === batchNo);
+  if (!batch) {
+    return res.status(404).json({ success: false, message: 'Batch not found' });
+  }
+
+  res.json({
+    success: true,
+    data: {
+      _id: batchId,
+      itemId: item._id,
+      itemName: item.name,
+      sku: item.sku,
+      manufacturer: item.manufacturer,
+      batchNo: batch.batchNo,
+      expiryDate: batch.expiryDate,
+      onHand: batch.onHand,
+      mrp: batch.mrp,
+      purchasePrice: batch.purchasePrice,
+      salePrice: batch.salePrice,
+    },
+  });
+});
+
+export const updateBatchPrice = asyncHandler(async (req: Request, res: Response) => {
+  const { batchId } = req.params;
+  const { mrp, purchasePrice, salePrice, expiryDate } = req.body as any;
+
+  if (!batchId || !batchId.includes('-')) {
+    return res.status(400).json({ success: false, message: 'Invalid batchId format' });
+  }
+
+  const [itemId, batchNo] = batchId.split('-');
+
+  const item = await Item.findById(itemId);
+  if (!item) {
+    return res.status(404).json({ success: false, message: 'Product not found' });
+  }
+
+  const batchIdx = item.batches.findIndex(b => b.batchNo === batchNo);
+  if (batchIdx === -1) {
+    return res.status(404).json({ success: false, message: 'Batch not found' });
+  }
+
+  if (mrp !== undefined) item.batches[batchIdx].mrp = mrp;
+  if (purchasePrice !== undefined) item.batches[batchIdx].purchasePrice = purchasePrice;
+  if (salePrice !== undefined) item.batches[batchIdx].salePrice = salePrice;
+  if (expiryDate !== undefined) item.batches[batchIdx].expiryDate = new Date(expiryDate);
+
+  await item.save();
+
+  res.json({
+    success: true,
+    data: {
+      _id: batchId,
+      itemId: item._id,
+      itemName: item.name,
+      batchNo: item.batches[batchIdx].batchNo,
+      expiryDate: item.batches[batchIdx].expiryDate,
+      onHand: item.batches[batchIdx].onHand,
+      mrp: item.batches[batchIdx].mrp,
+      purchasePrice: item.batches[batchIdx].purchasePrice,
+      salePrice: item.batches[batchIdx].salePrice,
+    },
+  });
+});
+
+export const deleteBatchStrict = asyncHandler(async (req: Request, res: Response) => {
+  const { batchId } = req.params;
+
+  if (!batchId || !batchId.includes('-')) {
+    return res.status(400).json({ success: false, message: 'Invalid batchId format' });
+  }
+
+  const [itemId, batchNo] = batchId.split('-');
+
+  const item = await Item.findById(itemId);
+  if (!item) {
+    return res.status(404).json({ success: false, message: 'Product not found' });
+  }
+
+  const batchIdx = item.batches.findIndex(b => b.batchNo === batchNo);
+  if (batchIdx === -1) {
+    return res.status(404).json({ success: false, message: 'Batch not found' });
+  }
+
+  if ((item.batches[batchIdx].onHand || 0) > 0) {
+    return res.status(400).json({ success: false, message: 'Cannot delete batch with remaining stock' });
+  }
+
+  const batchQuantity = item.batches[batchIdx].onHand || 0;
+  item.batches.splice(batchIdx, 1);
+  item.onHand = Math.max(0, (item.onHand || 0) - batchQuantity);
+
+  await item.save();
+
+  res.json({ success: true, data: { id: batchId } });
+});
+
 export const getAllBatches = asyncHandler(async (req: Request, res: Response) => {
   const items = await Item.find({ 'batches.0': { $exists: true } });
 
