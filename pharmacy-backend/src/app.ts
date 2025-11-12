@@ -9,6 +9,8 @@ import itemRoutes from './routes/items.routes';
 import batchesRoutes from './routes/batches.routes';
 import grnRoutes from './routes/grn.routes';
 import stockMovementRoutes from './routes/stock-movement.routes';
+import purchasesRoutes from './routes/purchases.routes';
+import purchaseReturnsRoutes from './routes/purchase-returns.routes';
 import { errorHandler, notFound } from './middleware/error';
 
 export const createApp = () => {
@@ -38,6 +40,8 @@ export const createApp = () => {
   app.use('/api/items', itemRoutes);
   app.use('/api/batches', batchesRoutes);
   app.use('/api/grn', grnRoutes);
+  app.use('/api/purchases', purchasesRoutes);
+  app.use('/api/purchase-returns', purchaseReturnsRoutes);
   app.use('/api/stock-movements', stockMovementRoutes);
 
   app.use(notFound);
