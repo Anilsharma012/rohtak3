@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { Item } from '../types';
 import Toast from '../components/Toast';
@@ -17,8 +16,11 @@ interface GRNLine {
   salePrice?: number;
 }
 
-const AddStockGRNPage: React.FC = () => {
-  const navigate = useNavigate();
+interface AddStockGRNPageProps {
+  setActivePage?: (page: string) => void;
+}
+
+const AddStockGRNPage: React.FC<AddStockGRNPageProps> = ({ setActivePage }) => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(false);
   const [invoiceNo, setInvoiceNo] = useState('');
