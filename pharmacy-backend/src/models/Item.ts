@@ -1,48 +1,69 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
+
+export type Unit = 'tablet' | 'capsule' | 'ml' | 'gm' | 'syrup' | 'pack' | 'other';
+
+export interface IItemBatch {
+  batchNo: string;
+  expiryDate?: Date;
+  onHand: number;
+  mrp?: number;
+  purchasePrice?: number;
+  salePrice?: number;
+}
 
 export interface IItem extends Document {
   name: string;
   sku?: string;
   hsn?: string;
-  salt?: string; // active ingredient
+  salt?: string;
   manufacturer?: string;
-  unit: 'tablet' | 'capsule' | 'ml' | 'gm' | 'syrup' | 'pack' | 'other';
-  packSize?: string; // e.g., "10x10", "100ml"
-  batchNo?: string;
-  expiryDate?: Date;
+  unit: Unit;
+  packSize?: string;
+  barcode?: string;
+  gstPercent?: number;
   mrp?: number;
   purchasePrice?: number;
   salePrice?: number;
-  gstPercent?: number;
   minStock?: number;
-  barcode?: string;
   onHand: number;
   notes?: string;
+  batches: IItemBatch[];
 }
+
+const BatchSchema = new Schema<IItemBatch>(
+  {
+    batchNo: { type: String, required: true },
+    expiryDate: { type: Date },
+    onHand: { type: Number, default: 0 },
+    mrp: { type: Number },
+    purchasePrice: { type: Number },
+    salePrice: { type: Number },
+  },
+  { _id: false }
+);
 
 const ItemSchema = new Schema<IItem>(
   {
-    name: { type: String, required: true, index: 'text' },
-    sku: { type: String },
+    name: { type: String, required: true },
+    sku: { type: String, sparse: true, unique: true },
     hsn: { type: String },
     salt: { type: String },
     manufacturer: { type: String },
     unit: { type: String, enum: ['tablet','capsule','ml','gm','syrup','pack','other'], default: 'other' },
     packSize: { type: String },
-    batchNo: { type: String },
-    expiryDate: { type: Date },
+    barcode: { type: String },
+    gstPercent: { type: Number, default: 0 },
     mrp: { type: Number },
     purchasePrice: { type: Number },
     salePrice: { type: Number },
-    gstPercent: { type: Number, default: 0 },
     minStock: { type: Number, default: 0 },
-    barcode: { type: String },
     onHand: { type: Number, default: 0 },
     notes: { type: String },
+    batches: { type: [BatchSchema], default: [] },
   },
   { timestamps: true }
 );
 
-ItemSchema.index({ name: "text", salt: "text", manufacturer: "text" });
+ItemSchema.index({ name: 'text', salt: 'text', manufacturer: 'text' });
 
 export const Item = mongoose.model<IItem>('Item', ItemSchema);
