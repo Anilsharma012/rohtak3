@@ -12,6 +12,7 @@ interface SidebarProps {
   activePage: string;
   setActivePage: (page: string) => void;
   onLogout: () => void;
+  userRole?: string;
 }
 
 const navItems = [
@@ -57,7 +58,7 @@ const navItems = [
     { type: 'link', id: 'user-roles', label: 'User Roles & Permissions', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M15 21a6 6 0 00-9-5.197m0 0A5.965 5.965 0 0112 13a5.965 5.965 0 013 1.803" /></svg> },
 ];
 
-const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, onLogout }) => {
+const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, onLogout, userRole }) => {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     inventory: true,
     purchases: true,
@@ -97,6 +98,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage, setActivePage, onLogout }
         <div className="flex-1 overflow-y-auto pb-4">
             <ul className="space-y-1">
                 {navItems.map((item, index) => {
+                    if (item.type === 'link' && item.id === 'user-roles' && userRole !== 'admin') {
+                        return null;
+                    }
                     if (item.type === 'link') {
                         // FIX: Pass props explicitly to avoid type errors with spread operator on union types.
                         return <NavLink key={item.id} id={item.id} label={item.label} icon={item.icon} />

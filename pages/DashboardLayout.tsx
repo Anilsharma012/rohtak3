@@ -18,11 +18,14 @@ import SalesOrdersPage from './SalesOrdersPage';
 import DeliveryManagementPage from './DeliveryManagementPage';
 import UserRolesPage from './UserRolesPage';
 
+import type { AuthUser } from '../types';
+
 interface DashboardLayoutProps {
+  user: AuthUser;
   onLogout: () => void;
 }
 
-const DashboardLayout: React.FC<DashboardLayoutProps> = ({ onLogout }) => {
+const DashboardLayout: React.FC<DashboardLayoutProps> = ({ user, onLogout }) => {
   const [activePage, setActivePage] = useState('dashboard');
 
   const renderPage = () => {
@@ -68,7 +71,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ onLogout }) => {
 
   return (
     <div className="flex h-screen bg-slate-100">
-      <Sidebar activePage={activePage} setActivePage={setActivePage} onLogout={onLogout} />
+      <Sidebar activePage={activePage} setActivePage={setActivePage} onLogout={onLogout} userRole={user.role} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
           {renderPage()}

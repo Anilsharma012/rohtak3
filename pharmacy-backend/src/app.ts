@@ -18,8 +18,12 @@ export const createApp = () => {
 
   app.use(cors({
     origin: (origin, cb) => {
+      // Allow same-origin, server-to-server, and all origins in development
       if (!origin) return cb(null, true);
+      if (ENV.NODE_ENV !== 'production') return cb(null, true);
       if (ENV.CLIENT_ORIGINS.includes(origin)) return cb(null, true);
+      const allowedPattern = /(\.fly\.dev|\.builder\.dev|localhost:\d+)$/i;
+      if (allowedPattern.test(origin)) return cb(null, true);
       return cb(new Error('Not allowed by CORS'));
     },
     credentials: true
@@ -27,8 +31,8 @@ export const createApp = () => {
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
 
-  app.use('/auth', authRoutes);
-  app.use('/items', itemRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/items', itemRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

@@ -5,10 +5,10 @@ import { createItem, getItems, getItem, updateItem, deleteItem, adjustStock } fr
 const router = Router();
 
 router.get('/', requireAuth(), getItems);
-router.post('/', requireAuth(['admin']), createItem);
+router.post('/', requireAuth(['admin','inventory_manager']), createItem);
 router.get('/:id', requireAuth(), getItem);
-router.put('/:id', requireAuth(['admin']), updateItem);
+router.put('/:id', requireAuth(['admin','inventory_manager']), updateItem);
 router.delete('/:id', requireAuth(['admin']), deleteItem);
-router.patch('/:id/adjust', requireAuth(['admin']), adjustStock);
+router.post('/:id/adjust-stock', requireAuth(['admin','inventory_manager']), adjustStock);
 
 export default router;
