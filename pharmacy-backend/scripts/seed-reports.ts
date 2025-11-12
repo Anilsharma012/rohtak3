@@ -22,15 +22,15 @@ const run = async () => {
     // create users
     const adminCount = await User.countDocuments({ role: 'admin' });
     if (adminCount === 0) {
-      const bcrypt = await import('bcryptjs');
-      const hashed = await bcrypt.hash('admin@123', 10);
+      const bcrypt = require('bcryptjs');
+      const hashed = bcrypt.hashSync('admin@123', 10);
       await User.create({ name: 'Admin', email: 'admin@gmail.com', password: hashed, role: 'admin' });
       console.log('Created admin user');
     }
     const cashierCount = await User.countDocuments({ role: 'cashier' });
     if (cashierCount === 0) {
-      const bcrypt = await import('bcryptjs');
-      const hashed = await bcrypt.hash('cashier@123', 10);
+      const bcrypt = require('bcryptjs');
+      const hashed = bcrypt.hashSync('cashier@123', 10);
       await User.create({ name: 'Cashier', email: 'cashier@gmail.com', password: hashed, role: 'cashier' });
       console.log('Created cashier user');
     }
