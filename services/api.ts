@@ -5,22 +5,46 @@ const BASE = (import.meta as any)?.env?.VITE_API_BASE_URL || '';
 const jsonHeaders = { 'Content-Type': 'application/json' } as const;
 
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${BASE}${path}`, {
-    credentials: 'include',
-    ...opts,
-    headers: {
-      ...jsonHeaders,
-      ...(opts.headers || {}),
-    },
-  });
-  let data: any = null;
-  const text = await res.text();
-  try { data = text ? JSON.parse(text) : null; } catch { data = text; }
-  if (!res.ok) {
-    const msg = (data && (data.message || data.error)) || res.statusText || 'Request failed';
-    throw new Error(msg);
+  try {
+    const res = await fetch(`${BASE}${path}`, {
+      credentials: 'include',
+      ...opts,
+      headers: {
+        ...jsonHeaders,
+        ...(opts.headers || {}),
+      },
+    });
+
+    let data: any = null;
+    const contentType = res.headers.get('content-type');
+
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+    } else {
+      const text = await res.text();
+      try {
+        data = text ? JSON.parse(text) : null;
+      } catch {
+        data = text;
+      }
+    }
+
+    if (!res.ok) {
+      const msg = (data && (data.message || data.error)) || res.statusText || `Request failed with status ${res.status}`;
+      throw new Error(msg);
+    }
+
+    return data as T;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('An unexpected error occurred');
   }
-  return data as T;
 }
 
 export const api = {
