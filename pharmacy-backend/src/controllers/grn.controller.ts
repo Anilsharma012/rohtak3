@@ -3,6 +3,12 @@ import { GRN } from '../models/GRN';
 import { Item } from '../models/Item';
 import { asyncHandler } from '../utils/asyncHandler';
 
+const toNumber = (v: any, def = 0) => {
+  if (v === undefined || v === null || v === '') return def;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : def;
+};
+
 export const createGRN = asyncHandler(async (req: Request, res: Response) => {
   const { invoiceNo, invoiceDate, vendor, lines } = req.body as any;
   const userId = (req as any).user?.id;
@@ -17,20 +23,37 @@ export const createGRN = asyncHandler(async (req: Request, res: Response) => {
     return res.status(400).json({ success: false, message: 'At least one line is required' });
   }
 
+  // normalize and validate lines
+  const normalized: any[] = [];
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line.productId) {
+    const raw = lines[i] || {};
+
+    // Accept productId or product (object or id)
+    let productId = raw.productId ?? raw.product?._id ?? raw.product;
+    if (productId && typeof productId !== 'string') productId = String(productId);
+
+    const batchNo = raw.batchNo?.toString()?.trim();
+    const qty = toNumber(raw.qty, 0);
+    const freeQty = toNumber(raw.freeQty, 0);
+    const purchasePrice = toNumber(raw.purchasePrice);
+    const mrp = raw.mrp === undefined || raw.mrp === null || raw.mrp === '' ? undefined : toNumber(raw.mrp);
+    const salePrice = raw.salePrice === undefined || raw.salePrice === null || raw.salePrice === '' ? undefined : toNumber(raw.salePrice);
+    const expiryDate = raw.expiryDate;
+
+    if (!productId) {
       return res.status(400).json({ success: false, message: `Line ${i + 1}: productId is required` });
     }
-    if (!line.batchNo) {
+    if (!batchNo) {
       return res.status(400).json({ success: false, message: `Line ${i + 1}: batchNo is required` });
     }
-    if (typeof line.qty !== 'number' || line.qty <= 0) {
+    if (!(qty > 0)) {
       return res.status(400).json({ success: false, message: `Line ${i + 1}: qty must be > 0` });
     }
-    if (typeof line.purchasePrice !== 'number' || line.purchasePrice < 0) {
+    if (!(purchasePrice >= 0)) {
       return res.status(400).json({ success: false, message: `Line ${i + 1}: purchasePrice is required and >= 0` });
     }
+
+    normalized.push({ productId, batchNo, expiryDate, qty, freeQty, purchasePrice, mrp, salePrice });
   }
 
   const checkInvoice = await GRN.findOne({ invoiceNo });
@@ -38,8 +61,8 @@ export const createGRN = asyncHandler(async (req: Request, res: Response) => {
     return res.status(409).json({ success: false, message: 'invoiceNo already exists' });
   }
 
-  const linesSaved = [];
-  for (const line of lines) {
+  const linesSaved: any[] = [];
+  for (const line of normalized) {
     const item = await Item.findById(line.productId);
     if (!item) {
       return res.status(404).json({ success: false, message: `Product ${line.productId} not found` });
@@ -50,9 +73,10 @@ export const createGRN = asyncHandler(async (req: Request, res: Response) => {
 
     if (batchIdx !== -1) {
       item.batches[batchIdx].onHand += totalQty;
-      if (line.purchasePrice) item.batches[batchIdx].purchasePrice = line.purchasePrice;
-      if (line.mrp) item.batches[batchIdx].mrp = line.mrp;
-      if (line.salePrice) item.batches[batchIdx].salePrice = line.salePrice;
+      if (line.purchasePrice !== undefined) item.batches[batchIdx].purchasePrice = line.purchasePrice;
+      if (line.mrp !== undefined) item.batches[batchIdx].mrp = line.mrp;
+      if (line.salePrice !== undefined) item.batches[batchIdx].salePrice = line.salePrice;
+      if (line.expiryDate) item.batches[batchIdx].expiryDate = new Date(line.expiryDate);
     } else {
       item.batches.push({
         batchNo: line.batchNo,
