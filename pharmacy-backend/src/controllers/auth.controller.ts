@@ -17,13 +17,15 @@ export const registerIfEmpty = asyncHandler(async (req: Request, res: Response) 
   if (count > 0) {
     return res.status(400).json({ success: false, message: 'Admin already exists. Use /api/auth/login.' });
   }
-  const { name, email, password } = req.body;
+
+  const { name, email, password } = req.body as { name?: string; email?: string; password?: string };
   if (!name || !email || !password) {
     return res.status(400).json({ success: false, message: 'name, email, password required' });
   }
+
   const hashed = await bcrypt.hash(password, 10);
-  const user = await User.create({ name, email, password: hashed, role: 'admin' });
-  res.json({ success: true, data: { id: user._id, email: user.email } });
+  const user = await User.create({ name, email: email.toLowerCase(), password: hashed, role: 'admin' });
+  res.json({ success: true, data: { id: user._id, email: user.email, name: user.name } });
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
