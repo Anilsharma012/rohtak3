@@ -25,7 +25,9 @@ export const registerIfEmpty = asyncHandler(async (req: Request, res: Response) 
 
   const hashed = await bcrypt.hash(password, 10);
   const user = await User.create({ name, email: email.toLowerCase(), password: hashed, role: 'admin' });
-  res.json({ success: true, data: { id: user._id, email: user.email, name: user.name } });
+  const token = jwt.sign({ id: user._id, role: user.role }, ENV.JWT_SECRET, { expiresIn: '7d' });
+  res.cookie('token', token, cookieOpts());
+  res.json({ success: true, data: { id: user._id, email: user.email, name: user.name, role: user.role, token } });
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
