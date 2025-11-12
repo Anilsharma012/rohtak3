@@ -1,22 +1,28 @@
-
 import React, { useState } from 'react';
+import { api } from '../services/api';
+import type { AuthUser } from '../types';
 
 interface LoginPageProps {
-  onLogin: () => void;
+  onLogin: (user: AuthUser) => void;
 }
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
-  const [userId, setUserId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (userId === 'admin' && password === 'password') {
-      setError('');
-      onLogin();
-    } else {
-      setError('Invalid User ID or Password');
+    setError('');
+    setLoading(true);
+    try {
+      const res = await api.post<{ success: boolean; data: AuthUser }>('/api/auth/login', { email, password });
+      onLogin(res.data);
+    } catch (err: any) {
+      setError(err.message || 'Login failed');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,13 +40,13 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="relative">
-             <label className="text-sm font-bold text-gray-700 tracking-wide">User ID</label>
+             <label className="text-sm font-bold text-gray-700 tracking-wide">Email</label>
             <input
               className="w-full text-base py-3 px-4 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              type="text"
-              placeholder="admin"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -59,9 +65,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           <div>
             <button
               type="submit"
-              className="w-full flex justify-center bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-gray-100 p-4 rounded-full tracking-wide font-semibold shadow-lg cursor-pointer transition ease-in duration-300"
+              disabled={loading}
+              className={`w-full flex justify-center bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-gray-100 p-4 rounded-full tracking-wide font-semibold shadow-lg cursor-pointer transition ease-in duration-300 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              Sign in
+              {loading ? 'Signing in...' : 'Sign in'}
             </button>
           </div>
         </form>
