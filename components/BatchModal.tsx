@@ -50,28 +50,40 @@ const BatchModal: React.FC<BatchModalProps> = ({ isOpen, onClose, onSave, batchT
         }
         setBatch(prev => ({ ...prev, [name]: finalValue }));
     };
-    
+
     const handleProductChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const selectedProduct = products.find(p => p.id === e.target.value);
+        const selectedProduct = products.find(p => p._id?.toString() === e.target.value);
         if (selectedProduct) {
-             setBatch(prev => ({
+            setBatch(prev => ({
                 ...prev,
-                productId: selectedProduct.id,
-                mrp: selectedProduct.mrp // Auto-fill MRP from product
+                productId: selectedProduct._id?.toString() || '',
+                mrp: selectedProduct.mrp || 0,
             }));
         }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
+
         if (!batch.productId) {
-            alert('Please select a product.');
+            setError('Please select a product.');
             return;
         }
-        onSave({
-            ...batch,
-            id: batchToEdit?.id || Date.now().toString(),
-        });
+        if (!batch.batchNumber) {
+            setError('Batch number is required.');
+            return;
+        }
+        if (!batch.expiryDate) {
+            setError('Expiry date is required.');
+            return;
+        }
+        if (batch.quantity < 0) {
+            setError('Quantity cannot be negative.');
+            return;
+        }
+
+        onSave(batch);
     };
 
     return (
