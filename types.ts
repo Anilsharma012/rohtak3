@@ -127,3 +127,33 @@ export interface DeliveryOption {
     fee: number;
     status: 'Enabled' | 'Disabled';
 }
+
+// Backend-driven inventory types
+export type Unit = 'tablet' | 'capsule' | 'ml' | 'gm' | 'syrup' | 'pack' | 'other';
+export interface ItemBatch {
+    batchNo: string;
+    expiryDate?: string; // ISO date
+    onHand: number;
+    mrp?: number;
+    purchasePrice?: number;
+    salePrice?: number;
+}
+export interface Item {
+    _id?: string;
+    name: string;
+    sku?: string;
+    hsn?: string;
+    salt?: string;
+    manufacturer?: string;
+    unit: Unit;
+    packSize?: string;
+    barcode?: string;
+    gstPercent?: number;
+    mrp?: number;
+    purchasePrice?: number;
+    salePrice?: number;
+    minStock?: number;
+    onHand: number;
+    notes?: string;
+    batches: ItemBatch[];
+}
