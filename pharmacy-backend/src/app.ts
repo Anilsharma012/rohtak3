@@ -27,8 +27,8 @@ export const createApp = () => {
 
   app.get('/health', (_req, res) => res.json({ ok: true }));
 
-  app.use('/auth', authRoutes);
-  app.use('/items', itemRoutes);
+  app.use('/api/auth', authRoutes);
+  app.use('/api/items', itemRoutes);
 
   app.use(notFound);
   app.use(errorHandler);
