@@ -280,7 +280,7 @@ const BatchesPage: React.FC = () => {
                 }}
                 onSave={handleSaveBatch}
                 batchToEdit={batchToEdit ? convertBatchToFormData(batchToEdit) : null}
-                products={items.map(i => ({ id: i._id?.toString() || '', name: i.name, mrp: i.mrp || 0, brand: '', composition: '', hsn: '', schedule: 'NONE' as any, packSize: 0, uom: 'Tablet' as any, ptr: 0, pts: 0, rackLocation: '', reorderLevel: 0, stock: i.onHand || 0 }))}
+                products={items}
             />
 
             <GRNModal
