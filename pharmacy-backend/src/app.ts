@@ -9,6 +9,8 @@ import itemRoutes from './routes/items.routes';
 import batchesRoutes from './routes/batches.routes';
 import grnRoutes from './routes/grn.routes';
 import stockMovementRoutes from './routes/stock-movement.routes';
+import purchasesRoutes from './routes/purchases.routes';
+import purchaseReturnsRoutes from './routes/purchase-returns.routes';
 import { errorHandler, notFound } from './middleware/error';
 
 export const createApp = () => {
@@ -38,6 +40,16 @@ export const createApp = () => {
   app.use('/api/items', itemRoutes);
   app.use('/api/batches', batchesRoutes);
   app.use('/api/grn', grnRoutes);
+  app.use('/api/purchases', purchasesRoutes);
+  app.use('/api/purchase-returns', purchaseReturnsRoutes);
+  app.use('/api/sales', require('./routes/sales.routes').default);
+  app.use('/api/sales-returns', require('./routes/sales-returns.routes').default);
+  app.use('/api/sales-orders', require('./routes/sales-orders.routes').default);
+  app.use('/api/delivery-options', require('./routes/delivery-options.routes').default);
+  app.use('/api/settings', require('./routes/settings.routes').default);
+  app.use('/api/reports', require('./routes/reports.routes').default);
+  app.use('/api/compliance', require('./routes/compliance.routes').default);
+  app.use('/api/users', require('./routes/users.routes').default);
   app.use('/api/stock-movements', stockMovementRoutes);
 
   app.use(notFound);
