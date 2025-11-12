@@ -1,15 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import type { Batch, Product } from '../types';
+import type { Item } from '../types';
+
+interface BatchFormData {
+    productId: string;
+    batchNumber: string;
+    expiryDate: string;
+    purchasePrice: number;
+    mrp: number;
+    quantity: number;
+}
 
 interface BatchModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (batch: Batch) => void;
-    batchToEdit: Batch | null;
-    products: Product[];
+    onSave: (batch: BatchFormData) => void;
+    batchToEdit: BatchFormData | null;
+    products: Item[];
 }
 
-const emptyBatch: Omit<Batch, 'id'> = {
+const emptyBatch: BatchFormData = {
     productId: '',
     batchNumber: '',
     expiryDate: '',
@@ -19,7 +28,8 @@ const emptyBatch: Omit<Batch, 'id'> = {
 };
 
 const BatchModal: React.FC<BatchModalProps> = ({ isOpen, onClose, onSave, batchToEdit, products }) => {
-    const [batch, setBatch] = useState<Omit<Batch, 'id' | 'productName'>>({ ...emptyBatch });
+    const [batch, setBatch] = useState<BatchFormData>({ ...emptyBatch });
+    const [error, setError] = useState('');
 
     useEffect(() => {
         if (batchToEdit) {
@@ -27,6 +37,7 @@ const BatchModal: React.FC<BatchModalProps> = ({ isOpen, onClose, onSave, batchT
         } else {
             setBatch({ ...emptyBatch });
         }
+        setError('');
     }, [batchToEdit, isOpen]);
 
     if (!isOpen) return null;
