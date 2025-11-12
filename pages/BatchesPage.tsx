@@ -37,7 +37,7 @@ const BatchesPage: React.FC = () => {
   const loadBatches = async (page: number = 1) => {
     setLoading(true);
     try {
-      const res = await api.get<any>(`/api/items/batches?page=${page}&limit=50&expiry=${expiryFilter}${searchTerm ? `&q=${searchTerm}` : ''}`);
+      const res = await api.get<any>(`/api/batches?page=${page}&limit=50&expiry=${expiryFilter}${searchTerm ? `&q=${searchTerm}` : ''}`);
       if (res.success && res.data?.rows) {
         setBatches(res.data.rows);
         setCurrentPage(res.data.pagination?.page || 1);
