@@ -6,13 +6,20 @@ const jsonHeaders = { 'Content-Type': 'application/json' } as const;
 
 async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
   try {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('auth_token') : null;
+    const headers: Record<string, string> = {
+      ...jsonHeaders,
+      ...(opts.headers as Record<string, string> || {}),
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const res = await fetch(`${BASE}${path}`, {
       credentials: 'include',
       ...opts,
-      headers: {
-        ...jsonHeaders,
-        ...(opts.headers || {}),
-      },
+      headers,
     });
 
     let data: any = null;
