@@ -125,7 +125,7 @@ const AddStockGRNPage: React.FC<AddStockGRNPageProps> = ({ setActivePage }) => {
 
       success('GRN created successfully');
       setTimeout(() => {
-        navigate('/batches');
+        if (setActivePage) setActivePage('batches');
       }, 1500);
     } catch (err: any) {
       error(err.message || 'Failed to create GRN');
