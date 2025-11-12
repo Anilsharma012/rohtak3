@@ -334,7 +334,7 @@ const AddStockGRNPage: React.FC<AddStockGRNPageProps> = ({ setActivePage }) => {
         <div className="mt-8 flex justify-end gap-3 border-t pt-6">
           <button
             type="button"
-            onClick={() => navigate('/batches')}
+            onClick={() => setActivePage?.('batches')}
             className="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium"
           >
             Cancel
