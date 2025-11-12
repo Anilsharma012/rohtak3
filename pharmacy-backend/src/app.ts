@@ -35,6 +35,8 @@ export const createApp = () => {
 
   app.use('/api/auth', authRoutes);
   app.use('/api/items', itemRoutes);
+  app.use('/api/grn', grnRoutes);
+  app.use('/api/stock-movements', stockMovementRoutes);
 
   app.use(notFound);
   app.use(errorHandler);
