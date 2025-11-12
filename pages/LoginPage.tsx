@@ -11,6 +11,11 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showSeed, setShowSeed] = useState(false);
+  const [seedName, setSeedName] = useState('');
+  const [seedEmail, setSeedEmail] = useState('');
+  const [seedPassword, setSeedPassword] = useState('');
+  const [seedMsg, setSeedMsg] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,6 +77,68 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             </button>
           </div>
         </form>
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            onClick={() => setShowSeed(s => !s)}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            {showSeed ? 'Hide first admin setup' : 'Create first admin (only if none exists)'}
+          </button>
+        </div>
+        {showSeed && (
+          <div className="mt-4 border-t pt-4">
+            <div className="grid gap-3">
+              <div>
+                <label className="text-sm font-bold text-gray-700 tracking-wide">Name</label>
+                <input
+                  className="w-full text-base py-2.5 px-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="text"
+                  placeholder="Admin User"
+                  value={seedName}
+                  onChange={e => setSeedName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-bold text-gray-700 tracking-wide">Email</label>
+                <input
+                  className="w-full text-base py-2.5 px-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={seedEmail}
+                  onChange={e => setSeedEmail(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-bold text-gray-700 tracking-wide">Password</label>
+                <input
+                  className="w-full text-base py-2.5 px-3 mt-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  type="password"
+                  placeholder="Strong password"
+                  value={seedPassword}
+                  onChange={e => setSeedPassword(e.target.value)}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  setSeedMsg('');
+                  try {
+                    await api.post('/api/auth/register-if-empty', { name: seedName, email: seedEmail, password: seedPassword });
+                    setSeedMsg('Admin created. You can sign in now.');
+                    setEmail(seedEmail);
+                  } catch (err: any) {
+                    setSeedMsg(err.message || 'Failed to create admin');
+                  }
+                }}
+                className="w-full flex justify-center bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-gray-100 py-2.5 rounded-full tracking-wide font-semibold shadow-lg cursor-pointer transition ease-in duration-300"
+              >
+                Save first admin
+              </button>
+              {seedMsg && <p className="text-sm text-center text-gray-600">{seedMsg}</p>}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
