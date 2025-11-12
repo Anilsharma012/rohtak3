@@ -1,61 +1,63 @@
 import React, { useState, useEffect } from 'react';
-import type { Product } from '../types';
-import { Schedule } from '../types';
+import type { Item } from '../types';
 
 interface ProductModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (product: Product) => void;
-    productToEdit: Product | null;
+    onSave: (payload: Partial<Item> & { _id?: string }) => void;
+    productToEdit: Item | null;
 }
 
-const emptyProduct: Omit<Product, 'id'> = {
+const emptyItem: Item = {
     name: '',
-    brand: '',
-    composition: '',
+    sku: '',
     hsn: '',
-    schedule: Schedule.NONE,
-    packSize: 10,
-    uom: 'Strip',
+    salt: '',
+    manufacturer: '',
+    unit: 'other',
+    packSize: '',
+    barcode: '',
+    gstPercent: 0,
     mrp: 0,
-    ptr: 0,
-    pts: 0,
-    rackLocation: '',
-    reorderLevel: 10,
-    stock: 0,
+    purchasePrice: 0,
+    salePrice: 0,
+    minStock: 0,
+    onHand: 0,
+    notes: '',
+    batches: [],
 };
 
 const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSave, productToEdit }) => {
-    const [product, setProduct] = useState<Omit<Product, 'id'>>({ ...emptyProduct });
+    const [item, setItem] = useState<Item>({ ...emptyItem });
 
     useEffect(() => {
         if (productToEdit) {
-            setProduct(productToEdit);
+            setItem({ ...emptyItem, ...productToEdit });
         } else {
-            setProduct({ ...emptyProduct });
+            setItem({ ...emptyItem });
         }
     }, [productToEdit, isOpen]);
 
     if (!isOpen) return null;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setProduct(prev => ({ ...prev, [name]: name === 'mrp' || name === 'ptr' || name === 'pts' || name === 'packSize' || name === 'reorderLevel' || name === 'stock' ? parseFloat(value) || 0 : value }));
+        const numeric = ['gstPercent','mrp','purchasePrice','salePrice','minStock','onHand'];
+        setItem(prev => ({ ...prev, [name]: numeric.includes(name) ? Number(value) || 0 : value }));
     };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({
-            ...product,
-            id: productToEdit?.id || Date.now().toString(), // Keep existing id or generate a new one
-        });
+        const payload: Partial<Item> & { _id?: string } = { ...item };
+        if (!payload.name) return;
+        onSave(payload);
     };
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center">
             <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">{productToEdit ? 'Edit Product' : 'Add New Product'}</h2>
+                    <h2 className="text-2xl font-bold text-gray-800">{productToEdit? 'Edit Product' : 'Add New Product'}</h2>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -64,76 +66,82 @@ const ProductModal: React.FC<ProductModalProps> = ({ isOpen, onClose, onSave, pr
                 </div>
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Column 1 */}
                         <div>
                             <div className="mb-4">
                                 <label className="block text-sm font-medium text-gray-700">Product Name</label>
-                                <input type="text" name="name" value={product.name} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required />
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Brand</label>
-                                <input type="text" name="brand" value={product.brand} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                            </div>
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Composition</label>
-                                <input type="text" name="composition" value={product.composition} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                            </div>
-                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Schedule</label>
-                                <select name="schedule" value={product.schedule} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                    {Object.values(Schedule).map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
+                                <input name="name" value={item.name} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" required />
                             </div>
                             <div className="grid grid-cols-2 gap-4 mb-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Pack Size</label>
-                                    <input type="number" name="packSize" value={product.packSize} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                    <label className="block text-sm font-medium text-gray-700">Manufacturer</label>
+                                    <input name="manufacturer" value={item.manufacturer || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">UoM</label>
-                                    <select name="uom" value={product.uom} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                                        <option>Tablet</option>
-                                        <option>Strip</option>
-                                        <option>Box</option>
-                                        <option>Bottle</option>
-                                    </select>
+                                    <label className="block text-sm font-medium text-gray-700">Salt</label>
+                                    <input name="salt" value={item.salt || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
                                 </div>
                             </div>
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">HSN Code</label>
-                                <input type="text" name="hsn" value={product.hsn} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Unit</label>
+                                    <select name="unit" value={item.unit} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        <option value="tablet">tablet</option>
+                                        <option value="capsule">capsule</option>
+                                        <option value="ml">ml</option>
+                                        <option value="gm">gm</option>
+                                        <option value="syrup">syrup</option>
+                                        <option value="pack">pack</option>
+                                        <option value="other">other</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Pack Size</label>
+                                    <input name="packSize" value={item.packSize || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">HSN</label>
+                                    <input name="hsn" value={item.hsn || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Barcode</label>
+                                    <input name="barcode" value={item.barcode || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                </div>
                             </div>
                         </div>
-
-                        {/* Column 2 */}
                         <div>
                             <div className="grid grid-cols-3 gap-4 mb-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">MRP</label>
-                                    <input type="number" name="mrp" value={product.mrp} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                    <input type="number" name="mrp" value={item.mrp || 0} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">PTR</label>
-                                    <input type="number" name="ptr" value={product.ptr} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                    <label className="block text-sm font-medium text-gray-700">Purchase</label>
+                                    <input type="number" name="purchasePrice" value={item.purchasePrice || 0} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">PTS</label>
-                                    <input type="number" name="pts" value={product.pts} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                    <label className="block text-sm font-medium text-gray-700">Sale</label>
+                                    <input type="number" name="salePrice" value={item.salePrice || 0} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">GST %</label>
+                                    <input type="number" name="gstPercent" value={item.gstPercent || 0} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Min Stock</label>
+                                    <input type="number" name="minStock" value={item.minStock || 0} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">On Hand</label>
+                                    <input type="number" name="onHand" value={item.onHand || 0} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
                                 </div>
                             </div>
                             <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700">Rack Location</label>
-                                <input type="text" name="rackLocation" value={product.rackLocation} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                            </div>
-                             <div className="grid grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Current Stock</label>
-                                    <input type="number" name="stock" value={product.stock} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Re-order Level</label>
-                                    <input type="number" name="reorderLevel" value={product.reorderLevel} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
-                                </div>
+                                <label className="block text-sm font-medium text-gray-700">Notes</label>
+                                <textarea name="notes" value={item.notes || ''} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500" />
                             </div>
                         </div>
                     </div>
