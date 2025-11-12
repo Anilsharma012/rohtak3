@@ -13,9 +13,17 @@ const App: React.FC = () => {
     (async () => {
       try {
         const res = await api.get<{ success: boolean; data: AuthUser }>('/api/auth/me');
-        if (mounted) setUser(res.data);
+        if (mounted) {
+          setUser(res.data);
+          if (res.data?.token) {
+            localStorage.setItem('auth_token', res.data.token);
+          }
+        }
       } catch {
-        if (mounted) setUser(null);
+        if (mounted) {
+          setUser(null);
+          localStorage.removeItem('auth_token');
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -25,11 +33,15 @@ const App: React.FC = () => {
 
   const handleLogin = (u: AuthUser) => {
     setUser(u);
+    if (u.token) {
+      localStorage.setItem('auth_token', u.token);
+    }
   };
 
   const handleLogout = async () => {
     try { await api.post('/api/auth/logout'); } catch {}
     setUser(null);
+    localStorage.removeItem('auth_token');
   };
 
   if (loading) return <div className="flex items-center justify-center min-h-screen"><div className="text-gray-500">Loading...</div></div>;
