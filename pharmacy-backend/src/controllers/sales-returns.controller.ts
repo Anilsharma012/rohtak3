@@ -67,6 +67,16 @@ export const createSalesReturn = asyncHandler(async (req: Request, res: Response
       item.onHand = (item.onHand || 0) + qty;
       await item.save({ session });
 
+      // audit log
+      const AuditLogModel = require('../models/AuditLog').AuditLog;
+      const ControlledLogModel = require('../models/compliance.models').ControlledLog;
+      await AuditLogModel.create([{ actor: userId, action: 'return', productId: item._id, batchNo, delta: +qty, source: 'sales-return' }], { session });
+      try {
+        if ((item as any).isControlled) {
+          await ControlledLogModel.create([{ productId: item._id, batchNo, type: 'IN', qty, actor: userId, reason: 'sales return' }], { session });
+        }
+      } catch (e) {}
+
       prepared.push({ productId: item._id, productName: item.name, batchNo, qty, salePrice, amount: Number((qty * salePrice).toFixed(2)) });
       totalAmount += qty * salePrice;
 
