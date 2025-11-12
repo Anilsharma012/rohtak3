@@ -50,7 +50,11 @@ const run = async () => {
       console.log('Sample sale created', sale[0]._id.toString());
       process.exit(0);
     } catch (err) {
-      await session.abortTransaction();
+      try {
+        await session.abortTransaction();
+      } catch (e) {
+        // ignore
+      }
       session.endSession();
       throw err;
     }
