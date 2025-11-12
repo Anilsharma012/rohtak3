@@ -78,6 +78,26 @@ export const createSale = asyncHandler(async (req: Request, res: Response) => {
       item.onHand = Math.max(0, (item.onHand || 0) - qty);
       await item.save({ session });
 
+      // audit log
+      try {
+        const { AuditLog, ControlledLog, RecallNotice } = require('../models/compliance.models');
+        const { AuditLog: ALModel } = require('../models/AuditLog');
+      } catch (e) {
+        // ignore require issues
+      }
+      const AuditLogModel = require('../models/AuditLog').AuditLog;
+      const ControlledLogModel = require('../models/compliance.models').ControlledLog;
+      // create audit and controlled logs
+      await AuditLogModel.create([{ actor: userId, action: 'sale', productId: item._id, batchNo, delta: -qty, source: 'sale' }], { session });
+      // if product is controlled, add ControlledLog
+      try {
+        if ((item as any).isControlled) {
+          await ControlledLogModel.create([{ productId: item._id, batchNo, type: 'OUT', qty, actor: userId }], { session });
+        }
+      } catch (e) {
+        // ignore
+      }
+
       const amount = Number((qty * salePrice).toFixed(2));
       subtotal += amount;
 
