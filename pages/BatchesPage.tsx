@@ -95,7 +95,7 @@ const BatchesPage: React.FC = () => {
         if (!window.confirm(`Delete batch ${batch.batchNo}?`)) return;
         setError('');
         try {
-            await api.delete(`/api/items/${batch.itemId}/batches`, { batchNo: batch.batchNo });
+            await api.post(`/api/items/${batch.itemId}/batches/delete`, { batchNo: batch.batchNo });
             await loadData();
         } catch (err: any) {
             setError(err.message || 'Failed to delete batch');
