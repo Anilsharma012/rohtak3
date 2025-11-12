@@ -1,53 +1,127 @@
-import React, { useState, useMemo } from 'react';
-import useLocalStorage from '../hooks/useLocalStorage';
-import { Batch, Product } from '../types';
+import React, { useState, useEffect, useMemo } from 'react';
+import { api } from '../services/api';
+import { Item } from '../types';
 import BatchModal from '../components/BatchModal';
+import GRNModal from '../components/GRNModal';
 
-const initialBatches: Batch[] = [
-    { id: 'b1', productId: '1', productName: 'Calpol 500mg', batchNumber: 'CPL1001', expiryDate: '2025-12-31', purchasePrice: 20.00, mrp: 30.50, quantity: 80 },
-    { id: 'b2', productId: '1', productName: 'Calpol 500mg', batchNumber: 'CPL1002', expiryDate: '2024-11-30', purchasePrice: 20.50, mrp: 30.50, quantity: 40 },
-    { id: 'b3', productId: '2', productName: 'Cetzine 10mg', batchNumber: 'CTZ201A', expiryDate: '2026-05-31', purchasePrice: 14.00, mrp: 20.00, quantity: 95 },
-    { id: 'b4', productId: '6', productName: 'Crocin Advance', batchNumber: 'CRCADV01', expiryDate: '2024-09-30', purchasePrice: 24.00, mrp: 35.00, quantity: 3 },
-];
+interface BatchRow {
+    _id: string;
+    itemId: string;
+    itemName: string;
+    batchNo: string;
+    expiryDate?: Date;
+    onHand: number;
+    mrp?: number;
+    purchasePrice?: number;
+    salePrice?: number;
+}
 
 const BatchesPage: React.FC = () => {
-    const [products] = useLocalStorage<Product[]>('products', []);
-    const [batches, setBatches] = useLocalStorage<Batch[]>('batches', initialBatches);
+    const [batches, setBatches] = useState<BatchRow[]>([]);
+    const [items, setItems] = useState<Item[]>([]);
+    const [loading, setLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [batchToEdit, setBatchToEdit] = useState<Batch | null>(null);
+    const [isGRNOpen, setIsGRNOpen] = useState(false);
+    const [batchToEdit, setBatchToEdit] = useState<BatchRow | null>(null);
+    const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [expiryFilter, setExpiryFilter] = useState('ALL');
+    const [error, setError] = useState('');
 
-    const handleSaveBatch = (batch: Batch) => {
-        if (batchToEdit) {
-            setBatches(batches.map(b => b.id === batch.id ? batch : b));
-        } else {
-            setBatches([...batches, { ...batch, id: Date.now().toString() }]);
+    const loadData = async () => {
+        setLoading(true);
+        setError('');
+        try {
+            const itemsRes = await api.get<{ success: boolean; data: Item[] }>('/api/items');
+            setItems(itemsRes.data || []);
+
+            const batchesRes = await api.get<{ success: boolean; data: BatchRow[] }>('/api/items/batches/list');
+            setBatches(batchesRes.data || []);
+        } catch (err: any) {
+            setError(err.message || 'Failed to load data');
+        } finally {
+            setLoading(false);
         }
-        setIsModalOpen(false);
-        setBatchToEdit(null);
+    };
+
+    useEffect(() => {
+        loadData();
+    }, []);
+
+    const handleSaveBatch = async (batch: any) => {
+        setError('');
+        try {
+            if (batchToEdit && selectedItemId) {
+                await api.put(`/api/items/${selectedItemId}/batches`, {
+                    batchNo: batch.batchNumber,
+                    expiryDate: batch.expiryDate,
+                    onHand: batch.quantity,
+                    mrp: batch.mrp,
+                    purchasePrice: batch.purchasePrice,
+                    salePrice: batch.salePrice,
+                });
+            } else if (selectedItemId) {
+                await api.post(`/api/items/${selectedItemId}/batches`, {
+                    batchNo: batch.batchNumber,
+                    expiryDate: batch.expiryDate,
+                    onHand: batch.quantity,
+                    mrp: batch.mrp,
+                    purchasePrice: batch.purchasePrice,
+                    salePrice: batch.salePrice,
+                });
+            }
+            setIsModalOpen(false);
+            setBatchToEdit(null);
+            setSelectedItemId(null);
+            await loadData();
+        } catch (err: any) {
+            setError(err.message || 'Failed to save batch');
+        }
     };
 
     const handleAddNew = () => {
         setBatchToEdit(null);
+        setSelectedItemId(null);
         setIsModalOpen(true);
     };
 
-    const handleEdit = (batch: Batch) => {
+    const handleEdit = (batch: BatchRow) => {
         setBatchToEdit(batch);
+        setSelectedItemId(batch.itemId);
         setIsModalOpen(true);
     };
-    
-    const handleDelete = (batchId: string) => {
-        if (window.confirm('Are you sure you want to delete this batch?')) {
-            setBatches(batches.filter(b => b.id !== batchId));
+
+    const handleDelete = async (batch: BatchRow) => {
+        if (!window.confirm(`Delete batch ${batch.batchNo}?`)) return;
+        setError('');
+        try {
+            await api.delete(`/api/items/${batch.itemId}/batches`, { batchNo: batch.batchNo });
+            await loadData();
+        } catch (err: any) {
+            setError(err.message || 'Failed to delete batch');
         }
-    }
-    
-    const enrichedBatches = useMemo(() => batches.map(b => {
-        const product = products.find(p => p.id === b.productId);
-        return { ...b, productName: product?.name || 'Unknown Product' };
-    }), [batches, products]);
+    };
+
+    const handleOpenGRN = () => {
+        setIsGRNOpen(true);
+    };
+
+    const handleGRNSave = async (data: any) => {
+        setError('');
+        try {
+            await api.post(`/api/items/${data.itemId}/batches`, {
+                batchNo: data.batchNo,
+                expiryDate: data.expiryDate,
+                onHand: data.quantity,
+                mrp: data.mrp || 0,
+                purchasePrice: data.purchasePrice || 0,
+            });
+            setIsGRNOpen(false);
+            await loadData();
+        } catch (err: any) {
+            setError(err.message || 'Failed to add GRN');
+        }
+    };
 
     const isBatchNearExpiry = (expiryDate: string) => {
         const today = new Date();
