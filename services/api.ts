@@ -23,21 +23,37 @@ async function request<T>(path: string, opts: RequestInit = {}): Promise<T> {
     });
 
     let data: any = null;
-    const contentType = res.headers.get('content-type');
 
-    if (contentType && contentType.includes('application/json')) {
-      try {
-        data = await res.json();
-      } catch {
-        data = null;
+    // Parse response safely using a clone to avoid "body stream already read" errors
+    try {
+      const contentType = res.headers.get('content-type') || '';
+      const clone = res.clone();
+
+      if (contentType.includes('application/json')) {
+        try {
+          data = await clone.json();
+        } catch {
+          try {
+            const txt = await clone.text();
+            data = txt ? JSON.parse(txt) : null;
+          } catch {
+            data = null;
+          }
+        }
+      } else {
+        try {
+          const txt = await clone.text();
+          try {
+            data = txt ? JSON.parse(txt) : null;
+          } catch {
+            data = txt;
+          }
+        } catch {
+          data = null;
+        }
       }
-    } else {
-      const text = await res.text();
-      try {
-        data = text ? JSON.parse(text) : null;
-      } catch {
-        data = text;
-      }
+    } catch (parseErr) {
+      data = null;
     }
 
     if (!res.ok) {
