@@ -70,6 +70,13 @@ export const createSale = asyncHandler(async (req: Request, res: Response) => {
       const batchIdx = item.batches.findIndex(b => b.batchNo === batchNo);
       if (batchIdx === -1) throw new Error(`Batch ${batchNo} not found for product ${productId}`);
 
+      // recall check
+      const RecallNotice = require('../models/compliance.models').RecallNotice;
+      const recall = await RecallNotice.findOne({ productId: item._id, batchNo, status: 'Active' }).session(session);
+      if (recall) {
+        throw new Error(`Batch ${batchNo} for product ${productId} is under recall and cannot be sold`);
+      }
+
       const available = item.batches[batchIdx].onHand || 0;
       if (available < qty) throw new Error(`Insufficient stock in batch ${batchNo} for product ${productId}`);
 
