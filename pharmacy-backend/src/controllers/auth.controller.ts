@@ -27,11 +27,21 @@ export const registerIfEmpty = asyncHandler(async (req: Request, res: Response) 
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password } = req.body as { email: string; password: string };
-  const user = await User.findOne({ email });
-  if (!user || !user.isActive) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+  const { email, password } = req.body as { email?: string; password?: string };
+
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required' });
+  }
+
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user || !user.isActive) {
+    return res.status(401).json({ success: false, message: 'Invalid credentials' });
+  }
+
   const ok = await bcrypt.compare(password, user.password);
-  if (!ok) return res.status(401).json({ success: false, message: 'Invalid credentials' });
+  if (!ok) {
+    return res.status(401).json({ success: false, message: 'Invalid credentials' });
+  }
 
   const token = jwt.sign({ id: user._id, role: user.role }, ENV.JWT_SECRET, { expiresIn: '7d' });
   res.cookie('token', token, cookieOpts());
