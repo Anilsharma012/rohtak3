@@ -4,15 +4,15 @@ import { createItem, getItems, getItem, updateItem, deleteItem, adjustStock, add
 
 const router = Router();
 
+router.get('/batches/list', requireAuth(), getAllBatches);
 router.get('/', requireAuth(), getItems);
 router.post('/', requireAuth(['admin','inventory_manager']), createItem);
-router.get('/batches/list', requireAuth(), getAllBatches);
 router.get('/:id', requireAuth(), getItem);
 router.put('/:id', requireAuth(['admin','inventory_manager']), updateItem);
 router.delete('/:id', requireAuth(['admin']), deleteItem);
 router.post('/:id/adjust-stock', requireAuth(['admin','inventory_manager']), adjustStock);
 router.post('/:id/batches', requireAuth(['admin','inventory_manager']), addBatch);
 router.put('/:id/batches', requireAuth(['admin','inventory_manager']), updateBatch);
-router.delete('/:id/batches', requireAuth(['admin','inventory_manager']), deleteBatch);
+router.post('/:id/batches/delete', requireAuth(['admin','inventory_manager']), deleteBatch);
 
 export default router;
