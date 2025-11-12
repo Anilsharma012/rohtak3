@@ -47,7 +47,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
   const token = jwt.sign({ id: user._id, role: user.role }, ENV.JWT_SECRET, { expiresIn: '7d' });
   res.cookie('token', token, cookieOpts());
-  res.json({ success: true, data: { id: user._id, email: user.email, name: user.name, role: user.role } });
+  res.json({ success: true, data: { id: user._id, email: user.email, name: user.name, role: user.role, token } });
 });
 
 export const logout = asyncHandler(async (_req: Request, res: Response) => {
