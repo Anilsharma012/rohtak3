@@ -104,7 +104,7 @@ const BatchesPage: React.FC = () => {
   const handleDelete = async (batch: BatchRow) => {
     if (!window.confirm(`Delete batch ${batch.batchNo}? This action cannot be undone.`)) return;
     try {
-      await api.delete(`/api/items/batches/${batch._id}`);
+      await api.delete(`/api/batches/${batch._id}`);
       success('Batch deleted successfully');
       await loadBatches(currentPage);
     } catch (err: any) {
