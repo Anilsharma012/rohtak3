@@ -75,7 +75,7 @@ const BatchesPage: React.FC = () => {
   const handleSaveBatch = async (batch: any) => {
     try {
       if (batchToEdit) {
-        await api.put(`/api/items/batches/${batchToEdit._id}`, {
+        await api.put(`/api/batches/${batchToEdit._id}`, {
           mrp: batch.mrp,
           purchasePrice: batch.purchasePrice,
           salePrice: batch.salePrice,
