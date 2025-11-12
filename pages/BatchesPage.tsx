@@ -152,13 +152,27 @@ const BatchesPage: React.FC = () => {
         return matchesSearch && matchesExpiry;
     });
 
+    const convertBatchToFormData = (batch: BatchRow) => ({
+        productId: batch.itemId,
+        batchNumber: batch.batchNo,
+        expiryDate: batch.expiryDate ? new Date(batch.expiryDate).toISOString().split('T')[0] : '',
+        purchasePrice: batch.purchasePrice || 0,
+        mrp: batch.mrp || 0,
+        quantity: batch.onHand,
+    });
+
     return (
         <div>
+            {error && (
+                <div className="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+                    {error}
+                </div>
+            )}
+
             <div className="flex justify-between items-center mb-6 gap-4">
                 <h1 className="text-3xl font-bold text-gray-800">Batches & Stock</h1>
                 <div className="flex gap-2">
-                    <button onClick={() => alert('Import functionality coming soon!')} className="px-4 py-2 bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-50">Import</button>
-                    <button onClick={() => alert('Export functionality coming soon!')} className="px-4 py-2 bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-50">Export</button>
+                    <button onClick={handleOpenGRN} className="px-4 py-2 bg-white text-gray-700 font-semibold rounded-lg border border-gray-300 hover:bg-gray-50">Add Stock (GRN)</button>
                     <button
                         onClick={handleAddNew}
                         className="px-6 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-semibold rounded-lg shadow-md hover:from-cyan-600 hover:to-blue-700"
@@ -176,13 +190,13 @@ const BatchesPage: React.FC = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-2/3 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                 <div>
+                <div>
                     <label htmlFor="expiry-filter" className="sr-only">Filter by expiry</label>
                     <select
                         id="expiry-filter"
                         value={expiryFilter}
                         onChange={e => setExpiryFilter(e.target.value)}
-                         className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="ALL">All Expiry Status</option>
                         <option value="NEAR_EXPIRY">Expiring Soon (3 months)</option>
@@ -191,61 +205,89 @@ const BatchesPage: React.FC = () => {
                 </div>
             </div>
 
-            <div className="bg-white shadow-md rounded-lg overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full leading-normal">
-                        <thead>
-                            <tr>
-                                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product Name</th>
-                                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Batch No.</th>
-                                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Expiry</th>
-                                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity</th>
-                                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">MRP</th>
-                                <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredBatches.map(batch => {
-                                const isExpired = isBatchExpired(batch.expiryDate);
-                                const isNearExpiry = !isExpired && isBatchNearExpiry(batch.expiryDate);
-
-                                return (
-                                <tr key={batch.id}>
-                                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                                        <p className="text-gray-900 whitespace-no-wrap font-semibold">{batch.productName}</p>
-                                    </td>
-                                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                                        <p className="text-gray-900 whitespace-no-wrap">{batch.batchNumber}</p>
-                                    </td>
-                                    <td className={`px-5 py-4 border-b border-gray-200 text-sm ${isExpired ? 'bg-red-100' : isNearExpiry ? 'bg-yellow-100' : 'bg-white'}`}>
-                                        <p className={`${isExpired ? 'text-red-700 font-bold' : ''} ${isNearExpiry ? 'text-yellow-700 font-semibold' : ''} text-gray-900 whitespace-no-wrap`}>
-                                            {batch.expiryDate}
-                                        </p>
-                                    </td>
-                                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                                        <p className="text-gray-900 whitespace-no-wrap">{batch.quantity}</p>
-                                    </td>
-                                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
-                                        <p className="text-gray-900 whitespace-no-wrap">₹{batch.mrp.toFixed(2)}</p>
-                                    </td>
-                                    <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm text-center">
-                                        <button onClick={() => handleEdit(batch)} className="text-indigo-600 hover:text-indigo-900 mr-4 font-medium">Edit</button>
-                                        <button onClick={() => handleDelete(batch.id)} className="text-red-600 hover:text-red-900 font-medium">Delete</button>
-                                    </td>
+            {loading ? (
+                <div className="text-center py-8 text-gray-500">Loading...</div>
+            ) : (
+                <div className="bg-white shadow-md rounded-lg overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full leading-normal">
+                            <thead>
+                                <tr>
+                                    <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Product Name</th>
+                                    <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Batch No.</th>
+                                    <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Expiry</th>
+                                    <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Quantity</th>
+                                    <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">MRP</th>
+                                    <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Purchase Price</th>
+                                    <th className="px-5 py-3 border-b-2 border-gray-200 bg-gray-100 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
                                 </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {filteredBatches.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="px-5 py-8 border-b border-gray-200 bg-white text-center text-gray-500">
+                                            No batches found
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredBatches.map(batch => {
+                                        const isExpired = isBatchExpired(batch.expiryDate);
+                                        const isNearExpiry = isBatchNearExpiry(batch.expiryDate);
+                                        const expiryDateStr = batch.expiryDate ? new Date(batch.expiryDate).toISOString().split('T')[0] : 'N/A';
+
+                                        return (
+                                            <tr key={batch._id}>
+                                                <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                                                    <p className="text-gray-900 whitespace-no-wrap font-semibold">{batch.itemName}</p>
+                                                </td>
+                                                <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                                                    <p className="text-gray-900 whitespace-no-wrap">{batch.batchNo}</p>
+                                                </td>
+                                                <td className={`px-5 py-4 border-b border-gray-200 text-sm ${isExpired ? 'bg-red-100' : isNearExpiry ? 'bg-yellow-100' : 'bg-white'}`}>
+                                                    <p className={`${isExpired ? 'text-red-700 font-bold' : ''} ${isNearExpiry ? 'text-yellow-700 font-semibold' : ''} text-gray-900 whitespace-no-wrap`}>
+                                                        {expiryDateStr}
+                                                    </p>
+                                                </td>
+                                                <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                                                    <p className="text-gray-900 whitespace-no-wrap">{batch.onHand}</p>
+                                                </td>
+                                                <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                                                    <p className="text-gray-900 whitespace-no-wrap">₹{batch.mrp ? batch.mrp.toFixed(2) : '0.00'}</p>
+                                                </td>
+                                                <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm">
+                                                    <p className="text-gray-900 whitespace-no-wrap">₹{batch.purchasePrice ? batch.purchasePrice.toFixed(2) : '0.00'}</p>
+                                                </td>
+                                                <td className="px-5 py-4 border-b border-gray-200 bg-white text-sm text-center">
+                                                    <button onClick={() => handleEdit(batch)} className="text-indigo-600 hover:text-indigo-900 mr-4 font-medium">Edit</button>
+                                                    <button onClick={() => handleDelete(batch)} className="text-red-600 hover:text-red-900 font-medium">Delete</button>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            )}
 
             <BatchModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setBatchToEdit(null);
+                    setSelectedItemId(null);
+                }}
                 onSave={handleSaveBatch}
-                batchToEdit={batchToEdit}
-                products={products}
+                batchToEdit={batchToEdit ? convertBatchToFormData(batchToEdit) : null}
+                products={items.map(i => ({ id: i._id?.toString() || '', name: i.name, mrp: i.mrp || 0, brand: '', composition: '', hsn: '', schedule: 'NONE' as any, packSize: 0, uom: 'Tablet' as any, ptr: 0, pts: 0, rackLocation: '', reorderLevel: 0, stock: i.onHand || 0 }))}
+            />
+
+            <GRNModal
+                isOpen={isGRNOpen}
+                onClose={() => setIsGRNOpen(false)}
+                onSave={handleGRNSave}
+                items={items}
             />
         </div>
     );
